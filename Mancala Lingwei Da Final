@@ -1,0 +1,630 @@
+	
+	Introduction/plan (The format looks weird in txt file; it should look better in google docs):
+	
+	I plan to use the Tic Tac Toe frame and starter code and make a linked list to connect 14 buttons. 
+	Each node contains both a JButton and an Int value that represents the number of gems. An abstract class will be made as the template for 2 different nodes: one starting with 4 gems and one starting with 0 gems (using super to inherit).
+	The 2 stores will be tracked by 2 specific reference name for each. After clicking one of the 12 buttons, that button will be a head and give gems to its following buttons/holes. 
+	Furthermore, each node is also connected to its opposite node, so it can be adjusted to the special rule: If the last piece you drop is in an empty hole on your side, you capture that piece and any pieces in the hole directly opposite. 
+	A customized exception will be made to avoid clicking empty holes and stores while and after playing the game on the game board.
+	Other methods like checkWinConditions can be easily implemented by comparing the amount of gems in 2 stores. These methods will be written in a separate class that is specific for rules & logics.
+	
+/*
+ *  Mancala.java
+ *  Name: Lingwei Gu
+ *  Date: June 8, 2019
+ *  
+ *  		Purpose: It includes the main class that runs the game.
+ *			Methods:
+ *				Mancala(String title) - constructor
+ *				main(String[] args) - no return
+ */
+
+package testing;
+
+import javax.swing.JFrame;  //needed to use swing components e.g. JFrame
+
+import java.awt.Color;
+import java.awt.Container;
+
+public class Mancala extends JFrame{
+	
+// Set up constants for width and height of frame 
+	static final int WIDTH = 870; 
+	static final int HEIGHT = 360;
+	
+	// constructor
+	public Mancala(String title) { 
+	   	// Set the title of the frame, must be before variable declarations 
+	   	super(title);
+			   
+	   	MancalaPanel basicPanel; 
+	   	Container container;
+	   	
+	   	// Instantiate and add the SimplePanel to the frame 
+	   	basicPanel = new MancalaPanel();
+	   	basicPanel.setBackground(Color.getHSBColor(120, 200, 150));
+	   	container = getContentPane();
+	   	
+	   	//container.setLayout(null);
+	    setLocationByPlatform(true);
+	   	container.add(basicPanel);
+	   	container.validate();
+	} 
+	    
+	public static void main(String args[]) { 
+		// Instantiate a FirstApplication object so you can display it 
+		Mancala frame =  new Mancala("Mancala Game"); 
+	    frame.setDefaultCloseOperation(EXIT_ON_CLOSE); 
+		
+	    // Set the size of the application window (frame) 
+	    frame.setLocation(0,0);
+		frame.setSize(WIDTH, HEIGHT);
+			  
+	    frame.setVisible(true); // Show the application (frame) 
+	} 
+}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+/*
+  *  MancalaPanel.java
+ *  Name: Lingwei Gu
+ *  Date: June 8, 2019
+ *  
+ *  		Purpose: It initializes the Mancala panel
+ *			Methods:
+ *				MancalaPanel() - default constructor
+ *				actionPerformed(ActionEvent e) - no return
+ *				buttonInput(Hole head) - no return
+ *				resetGame() - no return
+ *				buildButton(Hole tempHole, int width, int length) - no return
+ *				paint() - no return
+ *			Class:
+ *				ReClickException extends Exception		
+ */
+
+package testing;
+
+import java.awt.Font; //needed to use components setting methods (e.g., colors, fonts) 
+import java.awt.SystemColor;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
+import java.awt.event.*; 
+
+public class MancalaPanel extends JPanel implements ActionListener, MouseListener{
+
+	 
+	private JButton 	exitButton, resetButton;
+	private JLabel    playerLabel, statusLabel; //private JLabel    playerLabel, statusLabel;
+	private Font      playerFont, fancyFont;
+	private Hole head, headConstant, headCopy;
+	private Hole leftStore = new Hole(0);
+	private Hole rightStore = new Hole(0);
+	
+	private static int bWidth = 90;
+	private static int bHeight = 50;
+	
+	//constructor
+	public MancalaPanel() {
+		playerFont = new Font("Dialog", Font.BOLD, 20);
+		fancyFont = new Font("Serif", Font.ITALIC, 24);
+		//create instance of Mancala
+		
+		// set the layout for the panel to not have a layout manager
+		setLayout(null);
+		
+		// Create and add a player JLabel 
+		playerLabel = new JLabel("Player 1"); 
+		playerLabel.setFont(playerFont);
+		playerLabel.setBounds(400, 25, 240, 45);
+		add(playerLabel);
+			
+		// Create a 2nd JLabel with a different font 
+		statusLabel = new JLabel("No Winner"); 
+		statusLabel.setFont(fancyFont);
+		statusLabel.setBounds(380, 160, 300, 180);
+		add(statusLabel); // Add the label to this Frame
+					
+		// Create a JButton (14 buttons - 2D)
+			Hole tempHole = new Hole(4);
+			head = tempHole;
+			headConstant = tempHole;
+			for (int row = 0; row < 2; row++){ //loop for rows
+				for (int col = 0; col < 6; col++) { //loop for columns
+					tempHole.setNext(new Hole(4));
+					buildButton(tempHole, 165+(col*bWidth), 100+(row*bHeight)); //set location of buttons
+	    			
+					//assign team
+					if (row == 0) {
+	    				tempHole.setIsMe("Player 2");
+	    			} else {
+	    				tempHole.setIsMe("Player 1");
+	    			}
+			    	
+					//insert rightStore
+				    if (col == 5 && row == 0) {
+						rightStore.setNext(tempHole);
+						leftStore.setNext(tempHole.getNext());
+						buildButton(rightStore, 730, 125);
+					}
+				    rightStore.setIsMe("rightStore");
+				    
+				    //insert leftStore
+				    if (row == 1 && col == 5) {
+				    	tempHole.setNext(rightStore);
+						buildButton(leftStore, 50, 125);
+				    	break;
+				    }
+				    leftStore.setIsMe("leftStore");
+				    
+				    //update the hole
+				    tempHole = tempHole.getNext();
+				    
+				}
+			}
+			
+			//redirection - make the nodes counter-clock wise
+			for (int i = 0; i < 5; i++) {
+				headCopy = headConstant;
+				for (int a = 0; a < 4 - i; a++) {
+					headCopy = headCopy.getNext();
+				}
+				headCopy.getNext().setNext(headCopy);
+			}
+			headConstant.setNext(leftStore);
+			
+			//locate opposite holes
+			head = headConstant.getNext().getNext();
+			for (int a = 0; a < 6; a++) {
+				headCopy = head;
+				for (int i = 0; i < 12 - a*2; i++) {
+					headCopy = headCopy.getNext();
+				}
+				head.opposite = headCopy;
+				headCopy.opposite = head;
+				head = head.getNext();
+			}
+
+			
+			//Add exit button
+			exitButton = new JButton("Exit"); 
+			exitButton.setBackground(SystemColor.control); 
+			exitButton.setLocation(440, 270); 
+		    exitButton.setSize(100,40); 
+		    add(exitButton);
+		    
+		    //Add reset button to allow for a new game    
+		    resetButton = new JButton("New Game"); 
+			resetButton.setBackground(SystemColor.control); 
+			resetButton.setLocation(310, 270); 
+		    resetButton.setSize(125,40); 
+		    add(resetButton);
+		    
+		    // Add event listeners for the buttons
+		    exitButton.addActionListener(this);
+		    resetButton.addActionListener(this);
+		    exitButton.addMouseListener(this);
+		    resetButton.addMouseListener(this);
+		    
+		    validate();
+		}	
+				
+			
+//This is the event handler for the button 
+    public void actionPerformed(ActionEvent e) { 
+    	if (e.getActionCommand().equals("Exit")) {
+        	System.exit(0);
+        }
+       
+        if (e.getActionCommand().equals("New Game")){
+    	   // Call the method to reset the game
+    	    resetGame();
+        }
+        
+        //catch exception / button response
+    	for (int i = 0; i < 14; i++) {
+	    	if (e.getSource() == head.getButton()) {
+	    		try { //catch the ReClickException
+					buttonInput(head);
+				} catch (ReClickException ex) {
+					System.out.println("The button is already clicked.");
+				}
+	    		break;
+	    	}
+	    	head = head.getNext();
+    	}
+    	paint();
+    }
+    
+    //dealing with the input
+    public void buttonInput(Hole head) throws ReClickException{
+    	boolean notKeepGoing = true;
+    	String winCondition = "";
+		//throw the exception
+    	if (head.getButton().getText().equals("0") || !statusLabel.getText().equals("No Winner") || !head.getIsMe().equals(playerLabel.getText())) {
+    		throw new ReClickException(); //Then throw it!
+    	}
+    	MancalaRules rules = new MancalaRules();
+    	
+    	notKeepGoing = rules.checkNotKeepGoing(head);
+    	if (head.getIsMe().equals("Player 1")) { //operate gem number
+    		rightStore.setGemNum(rules.moveGem(head, playerLabel) + rightStore.getGemNum());
+    	} else {
+    		leftStore.setGemNum(rules.moveGem(head, playerLabel) + leftStore.getGemNum());
+    	}
+    	
+    	if (notKeepGoing) {//check who goes next
+			playerLabel.setText(head.getOpposite().isMe);
+		}
+		head.getButton().setText(Integer.toString(head.getGemNum()));
+		winCondition = rules.checkWinner(leftStore, rightStore); //check winner
+		if(!winCondition.equals("Keep Going")) { //reset panel
+			statusLabel.setText(winCondition);
+			for (int i = 0; i < 14; i++) {
+				if (headCopy.getIsMe().equals("leftStore") || headCopy.getIsMe().equals("rightStore")) {
+					continue;
+				}
+				headCopy.setGemNum(0);
+				headCopy = headCopy.getNext();
+			}
+			paint();
+		}
+		
+    }
+
+ // change everything back to the beginning  
+	public void resetGame(){
+		playerLabel.setText("Player 1");
+		statusLabel.setText("No Winner");
+		for (int i = 0; i < 14; i++) {
+			head.setGemNum(4);
+			head = head.getNext();
+		}
+		leftStore.setGemNum(0);
+		rightStore.setGemNum(0);
+		paint();
+	}
+	
+	//build a button to avoid repetitive code
+	public void buildButton(Hole tempHole, int width, int length) {
+		tempHole.setButton(new JButton("")); //set content
+		tempHole.getButton().setBackground(SystemColor.control); //set colour
+		tempHole.getButton().setLocation(width, length); //set location
+		tempHole.getButton().setSize(bWidth, bHeight);  //set size 
+	    add(tempHole.getButton());
+	    
+	    //Set all buttons to work with the event handlers
+	    tempHole.getButton().addActionListener(this);
+	    tempHole.getButton().addMouseListener(this);
+	    tempHole.getButton().setText(Integer.toString(tempHole.getGemNum()));
+	}
+	
+	//repaint the panel
+	public void paint() {
+		for (int i = 0; i < 14; i++) {
+			head.getButton().setText(Integer.toString(head.getGemNum()));
+			head = head.getNext();
+		}
+	}
+
+	public void mousePressed(MouseEvent event) { 
+	}
+	public void mouseReleased(MouseEvent event) { 
+		  // Good for dragging situations
+	  }
+	
+	public void mouseEntered(MouseEvent event) { 
+	  	//Brings focus to the button 
+	}
+		
+	public void mouseExited(MouseEvent event) { 
+	  	//Removes focus from the button
+	}
+	   
+	public void mouseClicked(MouseEvent event) { 
+	        
+	}
+}	
+	
+class ReClickException extends Exception{
+	public ReClickException() {
+		super();
+	}
+}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+/*
+  *  MancalaPanel.java
+ *  Name: Lingwei Gu
+ *  Date: June 8, 2019
+ *  
+ *  		Purpose: It has all the rules of the game
+ *			Methods:
+ *				MancalaRules() - constructor
+ *				moveGem(Hole head, JLabel playerLabel) - returns int
+ *				checkNotKeepGoing(Hole head) - returns boolean
+ *				checkWinner(Hole leftStore, Hole rightStore) - returns String
+ *
+ *				
+ *				
+ */
+package testing;
+
+import javax.swing.JLabel;
+
+public class MancalaRules {
+	public MancalaRules() { //default constructor
+	}
+	
+	//distribute gems
+	public int moveGem(Hole head, JLabel playerLabel) {
+		int gemsLeft = head.getGemNum();
+		String oppStore = "";
+		if (head.getIsMe().equals("Player 2")) { //record the enemy store to skip it
+			oppStore = "rightStore";
+		} else if (head.getIsMe().equals("Player 1")) {
+			oppStore = "leftStore";
+		}
+		head.setGemNum(0);
+		for (int i = 0; i < gemsLeft; i++) { //move the gems
+			head = head.getNext();
+			if (head.getIsMe().equals(oppStore)) { //skip the enemy store
+				i--;
+				continue;
+			}
+			head.setGemNum(head.getGemNum() + 1); //add a gem to each store passed by
+		}
+		if (head.getGemNum() == 1 && head.getIsMe().equals(playerLabel.getText())) { //capture pieces with landing the last move on an empty hole on your side
+			if (head.getOpposite().getGemNum() == 0) {
+				return 0;
+			}
+			int gemsCaptured = head.getGemNum() + head.getOpposite().getGemNum();
+			head.setGemNum(0);
+			head.getOpposite().setGemNum(0);
+			return gemsCaptured;
+		}
+		return 0;
+	}
+	
+	//check the player gets an extra round
+	public boolean checkNotKeepGoing(Hole head) {
+		Hole headCopy = head;
+		int gemsLeft = head.getGemNum();
+		for (int i = 0; i < gemsLeft; i++) { //locate the last landing
+			head = head.getNext();
+		}
+		if (head.getIsMe().equals("Player 1") || head.getIsMe().equals("Player 2")) { //simple and straightforward
+			return true;
+		} else {
+			if (headCopy.getIsMe().equals("Player 1") && head.getIsMe().equals("rightStore")) {
+				return false;
+			} 
+			if (headCopy.getIsMe().equals("Player 2") && head.getIsMe().equals("leftStore")) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	//check who the winner is
+	public String checkWinner(Hole leftStore, Hole rightStore) {
+		int gemCounterP1 = 0;
+		int gemCounterP2 = 0;
+		Hole startHole = leftStore;
+		//check gem numbers for player 1 and 2
+		for (int i = 0; i < 14; i++) {
+			if (startHole.getIsMe().equals("Player 1")) {
+				gemCounterP1 += startHole.getGemNum();
+			} else if (startHole.getIsMe().equals("Player 2")) {
+				gemCounterP2 += startHole.getGemNum();
+			}
+			startHole = startHole.getNext();
+		}
+		//return the result
+		if (gemCounterP1 == 0 || gemCounterP2 == 0) {
+			//reset the gem number in 2 stores
+			leftStore.setGemNum(leftStore.getGemNum() + gemCounterP2);
+			rightStore.setGemNum(rightStore.getGemNum() + gemCounterP1);
+			if (leftStore.getGemNum() == rightStore.getGemNum()) {
+				return "Draw";
+			}
+			if (leftStore.getGemNum() > rightStore.getGemNum()) {
+				return "Winner: Player 2!";
+			} else {
+				return "Winner: Player 1!";
+			}
+		}
+		return "Keep Going";
+	}
+
+}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+/*
+  *  Hole.java
+ *  Name: Lingwei Gu
+ *  Date: June.8, 2019
+ *  
+ *  		Purpose: It's a hole as well as a node
+ *			Methods:
+ *				Hole() - default constructor
+ *				Hole(int gemNum) - overloaded constructor
+ */
+package testing;
+
+public class Hole extends TemplateHole {
+	public Hole() {
+		super();
+	}
+	public Hole(int gemNum) {
+		this.gemNum = gemNum;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+  *  TemplateHole.java
+ *  Name: Lingwei Gu
+ *  Date: June.8, 2019
+ *  
+ *  		Purpose: It's a template for a hole in Mancala as a linked list node
+ *			Methods:
+ *				TemplateHole() - default constructor
+ *				TemplateHole(int gemNum) - overloaded constructor
+ *				getNext() - returns Hole
+				getOpposite() - returns Hole
+				getGemNum() - returns int
+				getButton() - returns JButton
+				getIsMe() - returns String
+				setNext(Hole next) - no return
+				setOpposite(Hole opposite) - no return
+				setGemNum(int gemNum) - no return
+				setButton(JButton button) - no return
+				setIsMe(String isMe) - no return
+ */
+
+package testing;
+
+import javax.swing.JButton;
+
+public abstract class TemplateHole{
+	protected String isMe;
+	protected Hole next;
+	protected Hole opposite;
+	protected int gemNum;
+	protected JButton button;
+	public TemplateHole() { //default constructor
+		this.isMe = "null";
+		this.next = null;
+		this.opposite = null;
+		this.gemNum = 0;
+	}
+	public TemplateHole(int gemNum) { //overloaded constructor
+		this.isMe = "null";
+		this.next = null;
+		this.opposite = null;
+		this.gemNum = gemNum;
+	}
+	
+	
+	
+	//getters
+	public Hole getNext() {
+		return this.next;
+	}
+	public Hole getOpposite() {
+		return this.opposite;
+	}
+	public int getGemNum() {
+		return this.gemNum;
+	}
+	public JButton getButton() {
+		return button;
+	}
+	public String getIsMe() {
+		return isMe;
+	}
+	
+	//setters
+	public void setNext(Hole next) {
+		this.next = next;
+	}
+	public void setOpposite(Hole opposite) {
+		this.opposite = opposite;
+	}
+	public void setGemNum(int gemNum) {
+		this.gemNum = gemNum;
+	}
+	public void setButton(JButton button) {
+		this.button = button;
+	}
+	public void setIsMe(String isMe) {
+		this.isMe = isMe;
+	}
+}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+Reflection:
+The only flaw I think is the initialization of the linked list is too trivial. I used the JButton array locations in Tictactoe for Mancala,
+so I had to redirect many nodes. Also, to implement more features, I used an abstract class TemplateHole, but it can be easier by just writing one Hole class.
+The background colour looks not perfect, but I tried to adjust parameters that control the colour and actually made it worse. So......
+It uses GUI, and the font/style is optimized (italic, etc). Maybe I can add animation in the further development.
+Strengths will be clear class structure and logic that make the code more readable.
+	
