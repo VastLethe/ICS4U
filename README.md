@@ -1,4 +1,4 @@
 # ICS4U
- High School Code Keeper
  It's an ancient board game called Mancala
- Made in Java used basic data structures and GUI(JPanel etc)
+ Made in Java
+ Used a circular and multi-directional linked list, and Java GUI(JPanel etc)
